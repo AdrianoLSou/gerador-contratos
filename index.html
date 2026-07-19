@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Contratos - RR Marcenaria</title>
+    <style>
+        /* Cores e Variáveis Gerais de Design */
+        :root {
+            --primary: #2c3e50;
+            --primary-light: #34495e;
+            --accent: #16a085;
+            --bg-app: #f4f6f8;
+            --bg-card: #ffffff;
+            --text-dark: #333333;
+            --border-color: #bdc3c7;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: var(--bg-app);
+            color: var(--text-dark);
+            padding: 10px;
+        }
+        /* Interface do Usuário (Painel no Celular) */
+        .app-container {
+            max-width: 800px;
+            margin: 0 auto 30px auto;
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .header-app {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 15px;
+        }
+        .header-app h1 {
+            color: var(--primary);
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .header-app p {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .section-form {
+            margin-bottom: 25px;
+            background: #fafbfc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .section-form h2 {
+            font-size: 14px;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent);
+            padding-left: 8px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--primary-light);
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #fff;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        /* Container Dinâmico de Produtos */
+        .product-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .product-row .input-unidades {
+            width: 70px;
+            text-align: center;
+        }
+        .product-row .input-descricao {
+            flex: 1;
+        }
+        .product-row .input-valor {
+            width: 120px;
+            text-align: right;
+        }
+        .btn-action-prod {
+            padding: 10px 12px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-add-prod {
+            background-color: var(--accent);
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .radio-group input {
+            width: auto;
+        }
+        .btn-generate {
+            display: block;
+            width: 100%;
+            background-color: #27ae60;
+            color: white;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(39, 174, 96, 0.2);
+            margin-top: 20px;
+        }
+        /* -------------------------------------------------- */
+        /* LAYOUT DO CONTRATO IMPRESSO (Estilo Documento Físico) */
+        /* -------------------------------------------------- */
+        #preview-contract {
+            display: none;
+        }
+        @media print {
+            .app-container, button, .section-form, .header-app, .btn-add-prod, .btn-action-prod {
+                display: none !important;
+            }
+            html, body {
+                background-color: #ffffff;
+                color: #000000;
+                font-family: 'Times New Roman', Times, serif;
+                font-size: 11pt;
+                line-height: 1.4;
+            }
+            @page {
+                size: A4;
+                margin: 15mm 15mm 15mm 15mm;
+            }
+            #preview-contract {
+                display: block !important;
+                width: 100%;
+            }
+            .document-title {
+                text-align: center;
+                font-size: 13pt;
+                font-weight: bold;
+                margin-bottom: 20px;
+                text-transform: uppercase;
+            }
+            .date-row {
+                text-align: right;
+                font-size: 11pt;
+                font-weight: bold;
+                margin-bottom: 15px;
+            }
+            .block-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 15px;
+            }
+            .block-table td {
+                border: 1px solid #000000;
+                padding: 6px 8px;
+                vertical-align: top;
+                font-size: 10.5pt;
+            }
+            .table-title {
+                background-color: #f2f2f2;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            .items-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                margin-bottom: 15px;
+            }
+            .items-table th, .items-table td {
+                border: 1px solid #000000;
+                padding: 6px 8px;
+                text-align: left;
+                font-size: 10.5pt;
+            }
+            .items-table th {
+                background-color: #f2f2f2;
+            }
+            .total-row {
+                font-weight: bold;
+                text-align: right;
+            }
+            .intro-text {
+                margin: 15px 0;
+                text-align: justify;
+                font-size: 11pt;
+            }
+            .clause {
+                margin-bottom: 10px;
+                text-align: justify;
+                font-size: 10pt;
+            }
+            .clause-title {
+                font-weight: bold;
+            }
+            .payment-box {
+                border: 1px solid #000000;
+                padding: 10px;
+                margin: 15px 0;
+                font-size: 10.5pt;
+            }
+            .payment-title {
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .warning-text {
+                font-size: 9pt;
+                font-weight: bold;
+                text-align: justify;
+                margin-bottom: 15px;
+            }
+            .closing-text {
+                margin-top: 25px;
+                font-size: 11pt;
+            }
+            .signature-container {
+                margin-top: 60px;
+                width: 100%;
+                display: table;
+            }
+            .signature-line {
+                display: table-cell;
+                width: 45%;
+                text-align: center;
+                border-top: 1px solid #000000;
+                padding-top: 5px;
+                font-size: 11pt;
+            }
+            .signature-spacer {
+                display: table-cell;
+                width: 10%;
+            }
+            h2, h3, .table-title, .payment-box, .signature-container {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header-app">
+            <h1>Gerador de Contratos</h1>
+            <p>Desenvolvido por Adriano Leal — Versão Inteligente v5</p>
+        </div>
+        <form id="contractForm" onsubmit="event.preventDefault(); window.print();">
+            
+            <!-- Dados do Contrato -->
+            <div class="section-form">
+                <h2>Informações Básicas</h2>
+                <div class="form-group">
+                    <label for="input_data">Data do Contrato:</label>
+                    <input type="text" id="input_data" value="" placeholder="DD/MM/AAAA" maxlength="10" data-default="">
+                </div>
+            </div>
+            <!-- Dados do Cliente -->
+            <div class="section-form">
+                <h2>Dados do Cliente Contratante</h2>
+                
+                <div class="form-group">
+                    <label>Tipo de Contratante:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="tipo_pessoa" value="PF" checked onclick="toggleTipoPessoa('PF')"> Pessoa Física (CPF)</label>
+                        <label><input type="radio" name="tipo_pessoa" value="PJ" onclick="toggleTipoPessoa('PJ')"> Pessoa Jurídica (CNPJ)</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label id="lbl_nome" for="input_nome">Nome Completo:</label>
+                    <input type="text" id="input_nome" value="" data-default="" required>
+                </div>
+                <div class="form-group">
+                    <label for="input_tel">Telefone:</label>
+                    <input type="text" id="input_tel" value="" data-default="" placeholder="(XX) XXXXX-XXXX" maxlength="15">
+                </div>
+                
+                <div class="form-group" id="div_doc">
+                    <label id="lbl_doc" for="input_doc">CPF:</label>
+                    <input type="text" id="input_doc" value="" data-default="" placeholder="000.000.000-00" maxlength="14">
+                </div>
+                <div class="form-group" id="div_rg">
+                    <label for="input_rg">RG:</label>
+                    <input type="text" id="input_rg" value="" data-default="">
+                </div>
+                <div class="form-group" id="div_nasc">
+                    <label for="input_nasc">Data de Nascimento:</label>
+                    <input type="text" id="input_nasc" value="" data-default="" placeholder="DD/MM/AAAA" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label for="input_end">Endereço (Rua, Nº):</label>
+                    <input type="text" id="input_end" value="" data-default="">
+                </div>
+                <div class="form-group">
+                    <label for="input_bairro">Bairro:</label>
+                    <input type="text" id="input_bairro" value="" data-default="">
+                </div>
+                <div class="form-group">
+                    <label for="input_cidade">Cidade:</label>
+                    <input type="text" id="input_cidade" value="" data-default="">
+                </div>
+                <div class="form-group">
+                    <label for="input_uf">UF:</label>
+                    <input type="text" id="input_uf" value="" data-default="" maxlength="2">
+                </div>
+                <div class="form-group">
+                    <label for="input_cep">CEP:</label>
+                    <input type="text" id="input_cep" value="" data-default="" placeholder="00000-000" maxlength="9">
+                </div>
+                <div class="form-group">
+                    <label for="input_ref">Referência do Local:</label>
+                    <input type="text" id="input_ref" value="" data-default="">
+                </div>
+            </div>
+            <!-- Descrição do Projeto / Itens estruturados -->
+            <div class="section-form">
+                <h2>Itens e Descrição do Serviço</h2>
+                <div id="container-produtos">
+                    <!-- Gerados via JavaScript para garantir sincronização total -->
+                </div>
+                <button type="button" class="btn-add-prod" onclick="adicionarLinhaProduto('', '', '')">+ Adicionar Item</button>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="input_valor_total">Valor Total (R$):</label>
+                    <input type="text" id="input_valor_total" value="" data-default="" placeholder="0,00">
+                </div>
+            </div>
+            <!-- Pagamento e Prazos -->
+            <div class="section-form">
+                <h2>Condições de Pagamento</h2>
+                <div class="form-group">
+                    <label for="input_forma_pagamento">Forma de Pagamento Detalhada:</label>
+                    <textarea id="input_forma_pagamento" rows="3" data-default="" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="input_prazo_entrega">Prazo de Entrega (Cláusula 1ª - dias):</label>
+                    <input type="number" id="input_prazo_entrega" value="40" data-default="40" required>
+                </div>
+                <div class="form-group">
+                    <label for="input_prazo_montagem">Prazo p/ Início da Montagem (Cláusula 2ª - horas):</label>
+                    <input type="number" id="input_prazo_montagem" value="72" data-default="72" required>
+                </div>
+                <div class="form-group">
+                    <label for="input_multa_rescisao">Multa por Rescisão Unilateral (Cláusula 13ª - %):</label>
+                    <input type="number" id="input_multa_rescisao" value="30" data-default="30" required>
+                </div>
+                <div class="form-group">
+                    <label for="input_foro">Foro da Comarca (Cláusula 14ª):</label>
+                    <input type="text" id="input_foro" value="Cabo Frio" data-default="Cabo Frio" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-generate">Gerar e Salvar PDF</button>
+        </form>
+    </div>
+    <!-- ESTRUTURA DO DOCUMENTO DE IMPRESSÃO (ESPELHO) -->
+    <div id="preview-contract">
+        <div class="date-row">DATA: <span id="pdf_data"></span></div>
+        <div class="document-title">CONTRATO DE COMPRA COM PRESTAÇÃO DE SERVIÇOS</div>
+        <!-- Tabela Empresa Contratada -->
+        <table class="block-table">
+            <tr>
+                <td colspan="2" class="table-title">Empresa Contratada: RR MARCENARIA</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>RR MARCENARIA</strong></td>
+            </tr>
+            <tr>
+                <td style="width: 65%;">End.: Rua Nossa Senhora Aparecida, 858 - Bairro: Parque Central</td>
+                <td style="width: 35%;">CEP: 28.905-190</td>
+            </tr>
+            <tr>
+                <td>Cidade: Cabo Frio - UF: RJ</td>
+                <td>CNPJ: 40.037.555/0001-22</td>
+            </tr>
+            <tr>
+                <td>Telefone: (22) 2644-6246 | Instagram: @gruporrmarcenaria</td>
+                <td>E-mail: rr.marcenariacf@gmail.com</td>
+            </tr>
+        </table>
+        <!-- Tabela Cliente Contratante -->
+        <table class="block-table">
+            <tr>
+                <td colspan="2" class="table-title">Cliente Contratante:</td>
+            </tr>
+            <tr>
+                <td style="width: 60%;"><span id="pdf_lbl_nome">Nome:</span> <span id="pdf_nome"></span></td>
+                <td style="width: 40%;">Telefone: <span id="pdf_tel"></span></td>
+            </tr>
+            <tr>
+                <td><span id="pdf_lbl_doc">CPF:</span> <span id="pdf_doc"></span></td>
+                <td>
+                    <span id="pdf_bloco_pf_docs">RG: <span id="pdf_rg"></span> | D. Nasc: <span id="pdf_nasc"></span></span>
+                    <span id="pdf_bloco_pj_docs" style="display:none;">Inscrição Estadual: Isento / Conforme Cadastro</span>
+                </td>
+            </tr>
+            <tr>
+                <td>Endereço: <span id="pdf_end"></span></td>
+                <td>Bairro: <span id="pdf_bairro"></span></td>
+            </tr>
+            <tr>
+                <td>Cidade: <span id="pdf_cidade"></span> - UF: <span id="pdf_uf"></span></td>
+                <td>CEP: <span id="pdf_cep"></span></td>
+            </tr>
+            <tr>
+                <td colspan="2">Referência: <span id="pdf_ref"></span></td>
+            </tr>
+        </table>
+        <div class="intro-text">
+            A RR MARCENARIA e o cliente acima qualificado firmam o presente contrato de compra em duas vias, na melhor forma de direito conforme as condições abaixo:
+        </div>
+        <table class="items-table" id="pdf_tabela_itens">
+            <thead>
+                <tr>
+                    <th style="width: 12%; text-align: center;">UNIDADES</th>
+                    <th style="width: 53%;">DESCRIÇÃO</th>
+                    <th style="width: 15%; text-align: right;">VALOR UNIT.</th>
+                    <th style="width: 20%; text-align: right;">R$ TOTAL</th>
+                </tr>
+            </thead>
+            <tbody id="pdf_itens_rows"></tbody>
+        </table>
+        <div class="payment-box">
+            <div class="payment-title">FORMA DE PAGAMENTO:</div>
+            <div id="pdf_forma_pagamento"></div>
+        </div>
+        <div class="warning-text">
+            AUTORIZO A CESSÃO PARCIAL OU INTEGRAL DO CRÉDITO NAS VENDAS A PRAZO. O CRÉDITO ESTÁ SUJEITO A APROVAÇÃO DA FINANCEIRA E PODERÁ SOLICITAR UM DEVEDOR AVALISTA PARA APROVAÇÃO DA MESMA.
+        </div>
+        <!-- Cláusulas Contratuais -->
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA PRIMEIRA:</span> A contratada obriga-se a entregar os volumes dos produtos comprados em até <span id="pdf_cl1"></span> dias, não havendo impossibilidade de conferir as medidas, podendo ser prorrogado pela empresa contratada ou a pedido do cliente, não sendo alteradas as condições de pagamento. PREVISÃO DE INÍCIO DO SERVIÇO: Conforme agendamento pós-conferência.
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA SEGUNDA:</span> A contratada obriga-se a iniciar a montagem após a entrega do produto em até <span id="pdf_cl2"></span> horas, mediante programação do setor de montagem e liberação do local pelo cliente ou profissional, a contratada reserva-se o direito de não iniciar a instalação caso o local não esteja apropriado para o recebimento da mercadoria. O ambiente deverá estar livre de obras pesadas, tais como: execução de gesso, colocação de piso, modificações e construção da alvenaria, etc. Caso seja prorrogada a entrega e montagem a pedido do contratante, este ficará no aguardo da programação do setor de montagem para a próxima data de disponibilidade do setor.
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA TERCEIRA:</span> O contratante obriga-se a entregar a obra ou os ambientes onde serão instalados os produtos, em perfeita ordem de sapatas e parede com acabamento pronto e nivelado, não ficando a contratada responsável por vazamentos em cano de água, desnível do chão, paredes e teto.
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA QUARTA:</span> A montagem do produto é efetuada conforme o projeto acordado entre o cliente e a empresa. As imagens dos layouts serão entregues impressas ou enviadas via whatsapp mediante a assinatura do contrato, sujeito a alterações após a conferência. As alterações de projeto só poderão ser realizadas até o momento da conferência, prazo este definido pelo consultor, projetista ou arquiteto da empresa contratada. Os projetos possuem medidas específicas de modulação, podendo sofrer ajustes para adequação às medidas do projeto realizado.
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA QUINTA:</span> Caso haja alguma alteração durante o processo, será realizada uma via de alteração para conhecimento e aprovação do contratante, com especificações do projeto anterior e após a alteração solicitada, sendo que estas vias deverão estar assinadas pelo contratante e pelo consultor de vendas. As alterações de projetos como mudança de cores, lâminas, acabamentos, acessórios e modulação, serão apurados os valores e, havendo diferença, o contratante estará ciente que deverá pagar os valores de acréscimo.
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA SEXTA:</span> É obrigatório o contratante fornecer o projeto hidráulico e elétrico dos ambientes, não se responsabilizando a empresa contratada por qualquer problema que possa ocorrer advindo da não entrega do projeto hidráulico e elétrico. A contratada, portanto, não se responsabilizará por problemas elétricos e hidráulicos como vazamentos, decorrentes da montagem.
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA SÉTIMA:</span> As alterações de projeto hidráulico ou elétrico, advindo da instalação dos móveis, serão de responsabilidade do contratante não sendo a contratada responsável pela execução e custos de instalações elétricas e hidráulicas, mesmo que requisitadas no projeto dos móveis, isentando-se assim por quaisquer danos ou avarias no imóvel ou nos móveis provenientes destas instalações.
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA OITAVA:</span> Quando não for possível finalizar a montagem por peça danificada, a contratada obriga-se com a substituição e conclusão da instalação, sendo que tal fato não justificará atraso no pagamento das parcelas acima descriminadas.
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA NONA:</span> O contratante fica ciente de que alguns módulos em geral possuem detalhes de furações e marcações da linha de produção de fábrica, não se tratando de defeito do produto ou montagem.
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA DÉCIMA:</span> O produto da marca RR Marcenaria possui um certificado de garantia. A contratada fornece uma garantia de até 5 anos conforme certificado de garantia da fabricante. A contratada não é responsável por defeitos de mau uso, desgastes decorridos de má utilização dos móveis ou acessórios, vazamentos de água, colocação de granitos, instalação elétrica ou qualquer situação adversa que venha danificar o móvel.
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA DÉCIMA PRIMEIRA:</span> A contratada não se responsabiliza pela instalação de eletrodomésticos, tipo coifa, fogão, refrigeradores, micro-ondas, televisores e outros, independente da forma de aquisição, por compra ou brindes ofertados ao contratante. A contratada se responsabilizará em informar ao contratante as assistências técnicas responsáveis pela instalação e manutenção dos eletros e equipamentos utilizados.
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA DÉCIMA SEGUNDA:</span> Nenhum acordo verbal terá validade entre as partes e qualquer alteração deverá se efetivar por meio de termo aditivo ao presente;
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA DÉCIMA TERCEIRA:</span> As partes concordam e reconhecem que, em razão dos produtos serem produtos por encomenda com exclusividade para o local projetado, não será admitida devolução ou desistência do pedido ora formalizado. Ocorrendo a rescisão unilateral por parte do(a) CONTRATANTE, este arcará com as despesas administrativas do presente negócio jurídico, equivalente a <span id="pdf_cl13"></span>% sobre o valor de seu pedido;
+        </div>
+        <div class="clause">
+            <span class="clause-title">CLÁUSULA DÉCIMA QUARTA:</span> Elegem o foro da comarca de <span id="pdf_cl14"></span> para dirimirem todas e quaisquer dúvidas decorrentes deste contrato.
+        </div>
+        <div class="closing-text">
+            Sem mais,<br>
+            Concordo com todas as cláusulas deste contrato.<br><br>
+            <span id="pdf_cidade_rodape">Cabo Frio</span>, <span id="pdf_data_extenso"></span>.
+        </div>
+        <div class="signature-container">
+            <div class="signature-line">
+                <strong>RR MARCENARIA</strong>
+            </div>
+            <div class="signature-spacer"></div>
+            <div class="signature-line">
+                <strong id="pdf_assinatura_cliente">CONTRATANTE</strong>
+            </div>
+        </div>
+    </div>
+    <!-- ROTEIRO DE COMPORTAMENTO INTELIGENTE -->
+    <script>
+        function setupLimpezaAutomatica(inputElement) {
+            inputElement.addEventListener('focus', function() {
+                if (this.value === this.getAttribute('data-default')) {
+                    this.value = '';
+                }
+            });
+            inputElement.addEventListener('blur', function() {
+                if (this.value.trim() === '') {
+                    this.value = this.getAttribute('data-default') || '';
+                    updateContract();
+                }
+            });
+        }
+
+        // Nova Máscara Dinâmica de Moeda/Valores
+        function mascaraMoeda(src) {
+            let valor = src.value.replace(/\D/g, "");
+            if (valor === "") {
+                src.value = "";
+                return;
+            }
+            valor = (parseInt(valor) / 100).toFixed(2);
+            let partes = valor.split(".");
+            partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            src.value = partes.join(",");
+        }
+
+        // Converte strings "1.234,56" para float puro float
+        function parseValorFloat(valorStr) {
+            if (!valorStr) return 0;
+            let limpo = valorStr.replace(/\D/g, "");
+            if (limpo === "") return 0;
+            return parseInt(limpo) / 100;
+        }
+
+        // Formata float puro de volta para String PT-BR Moeda
+        function formatarFloatParaMoeda(num) {
+            return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Executa a varredura das linhas para somar os itens automaticamente se inseridos
+        function calcularSomaAutomatica() {
+            const rows = document.querySelectorAll('.product-row');
+            let somaTotal = 0;
+            let temValorItem = false;
+
+            rows.forEach(row => {
+                const qtd = parseFloat(row.querySelector('.input-unidades').value) || 1;
+                const valStr = row.querySelector('.input-valor').value;
+                if (valStr.trim() !== "") {
+                    temValorItem = true;
+                    somaTotal += (qtd * parseValorFloat(valStr));
+                }
+            });
+
+            if (temValorItem) {
+                const inputTotal = document.getElementById('input_valor_total');
+                inputTotal.value = formatarFloatParaMoeda(somaTotal);
+            }
+        }
+
+        function aplicarMascara(src, maskPattern) {
+            let value = src.value.replace(/\D/g, "");
+            
+            if (maskPattern === "phone") {
+                if (value.length > 10) {
+                    maskPattern = "(##) #####-####";
+                } else {
+                    maskPattern = "(##) ####-####";
+                }
+            }
+            let formatted = "";
+            let valorIndex = 0;
+            for (let m = 0; m < maskPattern.length; m++) {
+                if (maskPattern[m] === "#") {
+                    if (value[valorIndex] !== undefined) {
+                        formatted += value[valorIndex];
+                        valorIndex++;
+                    } else {
+                        break;
+                    }
+                } else {
+                    if (value[valorIndex] !== undefined) {
+                        formatted += maskPattern[m];
+                    }
+                }
+            }
+            src.value = formatted;
+        }
+
+        function formatarDataPorExtenso(dataStr) {
+            if(!dataStr || !dataStr.includes('/')) return dataStr;
+            const partes = dataStr.split('/');
+            if(partes.length !== 3) return dataStr;
+            
+            const dia = parseInt(partes[0], 10);
+            const mesIdx = parseInt(partes[1], 10) - 1;
+            const ano = partes[2];
+            
+            const meses = [
+                "janeiro", "fevereiro", "março", "abril", "maio", "junho", 
+                "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
+            ];
+            
+            if(isNaN(dia) || mesIdx < 0 || mesIdx > 11 || !meses[mesIdx]) return dataStr;
+            return `${dia} de ${meses[mesIdx]} de ${ano}`;
+        }
+
+        let tipoAtual = "PF";
+        function toggleTipoPessoa(tipo) {
+            tipoAtual = tipo;
+            const lblNome = document.getElementById("lbl_nome");
+            const lblDoc = document.getElementById("lbl_doc");
+            const inputDoc = document.getElementById("input_doc");
+            
+            const divRg = document.getElementById("div_rg");
+            const divNasc = document.getElementById("div_nasc");
+            const pdfLblNome = document.getElementById("pdf_lbl_nome");
+            const pdfLblDoc = document.getElementById("pdf_lbl_doc");
+            const pdfBlocoPf = document.getElementById("pdf_bloco_pf_docs");
+            const pdfBlocoPj = document.getElementById("pdf_bloco_pj_docs");
+            if (tipo === "PF") {
+                lblNome.innerText = "Nome Completo:";
+                lblDoc.innerText = "CPF:";
+                inputDoc.placeholder = "000.000.000-00";
+                inputDoc.value = "060.771.929-02";
+                inputDoc.setAttribute("data-default", "060.771.929-02");
+                inputDoc.setAttribute("maxlength", "14");
+                divRg.style.display = "block";
+                divNasc.style.display = "block";
+                pdfLblNome.innerText = "Nome:";
+                pdfLblDoc.innerText = "CPF:";
+                pdfBlocoPf.style.display = "inline";
+                pdfBlocoPj.style.display = "none";
+            } else {
+                lblNome.innerText = "Razão Social / Nome Fantasia:";
+                lblDoc.innerText = "CNPJ:";
+                inputDoc.placeholder = "00.000.000/0001-00";
+                inputDoc.value = "00.000.000/0001-00";
+                inputDoc.setAttribute("data-default", "00.000.000/0001-00");
+                inputDoc.setAttribute("maxlength", "18");
+                divRg.style.display = "none";
+                divNasc.style.display = "none";
+                pdfLblNome.innerText = "Razão Social:";
+                pdfLblDoc.innerText = "CNPJ:";
+                pdfBlocoPf.style.display = "none";
+                pdfBlocoPj.style.display = "inline";
+            }
+            updateContract();
+        }
+
+        function adicionarLinhaProduto(unidades = "1", descricao = "", valorUnitario = "") {
+            const container = document.getElementById('container-produtos');
+            const row = document.createElement('div');
+            row.className = 'product-row';
+            
+            row.innerHTML = `
+                <input type="number" class="input-unidades" value="${unidades}" data-default="${unidades}" placeholder="Unid" min="1" oninput="calcularSomaAutomatica(); updateContract();">
+                <input type="text" class="input-descricao" value="${descricao}" data-default="${descricao}" placeholder="Descrição do produto/serviço..." required oninput="updateContract()">
+                <input type="text" class="input-valor" value="${valorUnitario}" placeholder="Valor Unit. (R$)" oninput="mascaraMoeda(this); calcularSomaAutomatica(); updateContract();">
+                <button type="button" class="btn-action-prod" onclick="removerLinhaProduto(this)">X</button>
+            `;
+            container.appendChild(row);
+            
+            setupLimpezaAutomatica(row.querySelector('.input-unidades'));
+            setupLimpezaAutomatica(row.querySelector('.input-descricao'));
+            
+            updateContract();
+        }
+
+        function removerLinhaProduto(button) {
+            button.parentElement.remove();
+            calcularSomaAutomatica();
+            updateContract();
+        }
+
+        function updateContract() {
+            document.getElementById('pdf_data').innerText = document.getElementById('input_data').value;
+            document.getElementById('pdf_nome').innerText = document.getElementById('input_nome').value;
+            document.getElementById('pdf_tel').innerText = document.getElementById('input_tel').value;
+            document.getElementById('pdf_doc').innerText = document.getElementById('input_doc').value;
+            
+            if (tipoAtual === "PF") {
+                document.getElementById('pdf_rg').innerText = document.getElementById('input_rg').value || '________';
+                document.getElementById('pdf_nasc').innerText = document.getElementById('input_nasc').value;
+            }
+            document.getElementById('pdf_end').innerText = document.getElementById('input_end').value;
+            document.getElementById('pdf_bairro').innerText = document.getElementById('input_bairro').value;
+            document.getElementById('pdf_cidade').innerText = document.getElementById('input_cidade').value;
+            document.getElementById('pdf_uf').innerText = document.getElementById('input_uf').value.toUpperCase();
+            document.getElementById('pdf_cep').innerText = document.getElementById('input_cep').value;
+            document.getElementById('pdf_ref').innerText = document.getElementById('input_ref').value;
+            document.getElementById('pdf_forma_pagamento').innerText = document.getElementById('input_forma_pagamento').value;
+            
+            document.getElementById('pdf_cl1').innerText = document.getElementById('input_prazo_entrega').value;
+            document.getElementById('pdf_cl2').innerText = document.getElementById('input_prazo_montagem').value;
+            document.getElementById('pdf_cl13').innerText = document.getElementById('input_multa_rescisao').value;
+            document.getElementById('pdf_cl14').innerText = document.getElementById('input_foro').value;
+            
+            document.getElementById('pdf_cidade_rodape').innerText = document.getElementById('input_cidade').value;
+            
+            const dataInputVal = document.getElementById('input_data').value;
+            document.getElementById('pdf_data_extenso').innerText = formatarDataPorExtenso(dataInputVal);
+            
+            document.getElementById('pdf_assinatura_cliente').innerText = document.getElementById('input_nome').value.toUpperCase();
+            
+            const tbody = document.getElementById('pdf_itens_rows');
+            tbody.innerHTML = '';
+            const rows = document.querySelectorAll('.product-row');
+            
+            rows.forEach((row) => {
+                const unidades = row.querySelector('.input-unidades').value || "1";
+                const descricao = row.querySelector('.input-descricao').value || "";
+                const valUnitStr = row.querySelector('.input-valor').value || "";
+                
+                if(descricao.trim() !== "") {
+                    let tr = document.createElement('tr');
+                    let displayUnit = valUnitStr !== "" ? "R$ " + valUnitStr : "—";
+                    let displayTotalItem = "—";
+                    
+                    if(valUnitStr !== "") {
+                        let totalItemCalc = (parseFloat(unidades) || 1) * parseValorFloat(valUnitStr);
+                        displayTotalItem = "R$ " + formatarFloatParaMoeda(totalItemCalc);
+                    }
+
+                    tr.innerHTML = `
+                        <td style="text-align: center; font-weight: bold;">${unidades}</td>
+                        <td>${descricao}</td>
+                        <td style="text-align: right;">${displayUnit}</td>
+                        <td style="text-align: right; font-weight: 500;">${displayTotalItem}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+
+            let trTotal = document.createElement('tr');
+            trTotal.innerHTML = `
+                <td colspan="3" class="total-row">VALOR TOTAL DO PEDIDO:</td>
+                <td style="font-weight: bold; text-align: right;">R$ ${document.getElementById('input_valor_total').value}</td>
+            `;
+            tbody.appendChild(trTotal);
+        }
+
+        // Inicialização de Máscaras nos campos fixos
+        document.getElementById("input_data").addEventListener("input", function() { 
+            aplicarMascara(this, "##/##/####"); 
+            updateContract();
+        });
+        document.getElementById("input_nasc").addEventListener("input", function() { aplicarMascara(this, "##/##/####"); });
+        document.getElementById("input_cep").addEventListener("input", function() { aplicarMascara(this, "#####-###"); });
+        document.getElementById("input_tel").addEventListener("input", function() { aplicarMascara(this, "phone"); });
+        document.getElementById("input_valor_total").addEventListener("input", function() { mascaraMoeda(this); updateContract(); });
+        
+        document.getElementById("input_doc").addEventListener("input", function() { 
+            if (tipoAtual === "PF") {
+                aplicarMascara(this, "###.###.###-##");
+            } else {
+                aplicarMascara(this, "##.###.###/####-##");
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Inicializa produtos padrão originais
+            adicionarLinhaProduto("1", "", "");
+            adicionarLinhaProduto("1", "", "");
+            adicionarLinhaProduto("1", "", "");
+            adicionarLinhaProduto("1", "", "");
+
+            const camposParaAtivar = document.querySelectorAll('#contractForm input[data-default], #contractForm textarea[data-default]');
+            camposParaAtivar.forEach(campo => {
+                setupLimpezaAutomatica(campo);
+                campo.addEventListener('input', updateContract);
+            });
+            updateContract();
+        });
+        
+        window.onbeforeprint = updateContract;
+    </script>
+</body>
+</html>
