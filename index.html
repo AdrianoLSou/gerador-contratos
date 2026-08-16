@@ -384,9 +384,15 @@
                     <textarea id="input_forma_pagamento" rows="3" data-default="" required></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="input_prazo_entrega">Prazo de Entrega (Cláusula 1ª - dias):</label>
-                    <input type="number" id="input_prazo_entrega" value="40" data-default="40" required>
-                </div>
+    <label for="input_prazo_entrega">Prazo de Entrega (Cláusula 1ª):</label>
+    <div style="display: flex; gap: 10px;">
+        <input type="number" id="input_prazo_entrega" value="40" data-default="40" style="width: 40%;" required>
+        <select id="select_tipo_dias_entrega" style="width: 60%;" onchange="updateContract()">
+            <option value="dias úteis" selected>dias úteis</option>
+            <option value="dias corridos">dias corridos</option>
+        </select>
+    </div>
+</div>
                 <div class="form-group">
                     <label for="input_prazo_montagem">Prazo p/ Início da Montagem (Cláusula 2ª - horas):</label>
                     <input type="number" id="input_prazo_montagem" value="72" data-default="72" required>
@@ -479,7 +485,8 @@
         </div>
         <!-- Cláusulas Contratuais -->
         <div class="clause">
-            <span class="clause-title">CLÁUSULA PRIMEIRA:</span> A contratada obriga-se a entregar os volumes dos produtos comprados em até <span id="pdf_cl1"></span> dias, não havendo impossibilidade de conferir as medidas, podendo ser prorrogado pela empresa contratada ou a pedido do cliente, não sendo alteradas as condições de pagamento. PREVISÃO DE INÍCIO DO SERVIÇO: Conforme agendamento pós-conferência.
+        <div class="clause">
+    <span class="clause-title">CLÁUSULA PRIMEIRA:</span> A contratada obriga-se a entregar os volumes dos produtos comprados em até <span id="pdf_cl1"></span> <span id="pdf_cl1_tipo">dias úteis</span>, não havendo impossibilidade de conferir as medidas em tempo hábil, podendo ser prorrogado pela empresa contratada ou a pedido do cliente, não sendo alteradas as condições de pagamento. PREVISÃO DE INÍCIO DO SERVIÇO: Conforme agendamento pós-conferência.
         </div>
         <div class="clause">
             <span class="clause-title">CLÁUSULA SEGUNDA:</span> A contratada obriga-se a iniciar a montagem após a entrega do produto em até <span id="pdf_cl2"></span> horas, mediante programação do setor de montagem e liberação do local pelo cliente ou profissional, a contratada reserva-se o direito de não iniciar a instalação caso o local não esteja apropriado para o recebimento da mercadoria. O ambiente deverá estar livre de obras pesadas, tais como: execução de gesso, colocação de piso, modificações e construção da alvenaria, etc. Caso seja prorrogada a entrega e montagem a pedido do contratante, este ficará no aguardo da programação do setor de montagem para a próxima data de disponibilidade do setor.
@@ -564,6 +571,38 @@
             src.value = partes.join(",");
         }
 
+        //Função para preencher automaticamente o endereço pelo CEP
+        function buscarCEP(cep) {
+    const cepLimpo = cep.replace(/\D/g, '');
+    
+    if (cepLimpo.length === 8) {
+        // Exibe um feedback visual simples
+        const inputEnd = document.getElementById('input_end');
+        inputEnd.placeholder = "Buscando endereço...";
+
+        fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.erro) {
+                    if (data.logradouro) document.getElementById('input_end').value = data.logradouro;
+                    if (data.bairro) document.getElementById('input_bairro').value = data.bairro;
+                    if (data.localidade) document.getElementById('input_cidade').value = data.localidade;
+                    if (data.uf) document.getElementById('input_uf').value = data.uf;
+
+                    updateContract(); // Atualiza a visualização do contrato impresso imediatamente
+                } else {
+                    alert("CEP não encontrado. Por favor, verifique o número digitado.");
+                }
+            })
+            .catch(() => {
+                alert("Erro ao buscar o CEP. Verifique sua conexão com a internet.");
+            })
+            .finally(() => {
+                inputEnd.placeholder = "Rua, Nº";
+            });
+    }
+}
+
         // Converte strings "1.234,56" para float puro float
         function parseValorFloat(valorStr) {
             if (!valorStr) return 0;
@@ -645,6 +684,35 @@
             return `${dia} de ${meses[mesIdx]} de ${ano}`;
         }
 
+        function buscarCEPPorEndereco() {
+            const uf = document.getElementById('input_uf').value.trim();
+            const cidade = document.getElementById('input_cidade').value.trim();
+            const endereco = document.getElementById('input_end').value.trim();
+
+            // A API exige UF com 2 letras, Cidade e Endereço com pelo menos 3 letras cada
+            if (uf.length === 2 && cidade.length >= 3 && endereco.length >= 3) {
+                fetch(`https://viacep.com.br/ws/${uf}/${encodeURIComponent(cidade)}/${encodeURIComponent(endereco)}/json/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (Array.isArray(data) && data.length > 0) {
+                            // Pega o CEP da primeira rua encontrada
+                            const cepEncontrado = data[0].cep;
+                            document.getElementById('input_cep').value = cepEncontrado;
+                            
+                            // Aproveita e preenche o bairro caso esteja em branco
+                            if (data[0].bairro && !document.getElementById('input_bairro').value) {
+                                document.getElementById('input_bairro').value = data[0].bairro;
+                            }
+
+                            updateContract();
+                        }
+                    })
+                    .catch(() => {
+                        // Silencioso caso não encontre
+                    });
+            }
+        }
+        
         let tipoAtual = "PF";
         function toggleTipoPessoa(tipo) {
             tipoAtual = tipo;
@@ -732,6 +800,7 @@
             document.getElementById('pdf_forma_pagamento').innerText = document.getElementById('input_forma_pagamento').value;
             
             document.getElementById('pdf_cl1').innerText = document.getElementById('input_prazo_entrega').value;
+            document.getElementById('pdf_cl1_tipo').innerText = document.getElementById('select_tipo_dias_entrega').value;
             document.getElementById('pdf_cl2').innerText = document.getElementById('input_prazo_montagem').value;
             document.getElementById('pdf_cl13').innerText = document.getElementById('input_multa_rescisao').value;
             document.getElementById('pdf_cl14').innerText = document.getElementById('input_foro').value;
@@ -786,7 +855,10 @@
             updateContract();
         });
         document.getElementById("input_nasc").addEventListener("input", function() { aplicarMascara(this, "##/##/####"); });
-        document.getElementById("input_cep").addEventListener("input", function() { aplicarMascara(this, "#####-###"); });
+       document.getElementById("input_cep").addEventListener("input", function() { 
+    aplicarMascara(this, "#####-###"); 
+    buscarCEP(this.value); 
+});
         document.getElementById("input_tel").addEventListener("input", function() { aplicarMascara(this, "phone"); });
         document.getElementById("input_valor_total").addEventListener("input", function() { mascaraMoeda(this); updateContract(); });
         
